@@ -3,15 +3,9 @@ extern scanf
 global main
 
 section .data
-  ;frase_num db ' %d ', 0
-  
-  ultimo_dado dd 1
-
   filename db 'catita.bmp', 0
   filename2 db 'catita2.bmp', 0
-  msg_fim db 'cabou yey', 0
 
-  
   fileHandle dd 0
   fileHandle2 dd 0
 
@@ -27,43 +21,65 @@ global start
 _start:
 
 ;ABRE O ARQUIVO catita
-mov eax, 5
-mov ebx, filename ; sys_open
-mov ecx, 0 ; read_only
-mov edx, 777
+mov EAX, 5
+mov EBX, filename ; sys_open
+mov ECX, 0 ; read_only
+mov EDX, 777
 int 80h
 
 ;MOVE O PONTEIRO PARA O HANDLE
 mov [fileHandle], EAX
 
 ;CRIA E ABRE catita2
-mov eax, 8           ; sys_creat 
-mov ebx, filename2 
-mov ecx, 777 
+mov EAX, 8           ; sys_creat 
+mov EBX, filename2 
+mov ECX, 777 
 int 80h 
 
 mov [fileHandle2], EAX
 
-;ATÉ AQUI CRIOU UM ARQUIVO CATITA2 VAZIO
+;Lê o header e já escreve em catita2
+  mov EAX, 3 ; sys_read
+  mov EBX, [fileHandle] ;file_descriptor
+  mov ECX, fileBufferHeader
+  mov EDX, 54
+  int 80h
+
+  mov EAX, 4 ; sys_write
+  mov EBX, [fileHandle2] ;1 -> escreve na tela ao invés do handler
+  mov ECX, fileBufferHeader
+  mov EDX, 54
+  int 80h
+
 ;jmp exit
 
 ;Lê o arquivo
 loop:
-  mov eax, 3 ; sys_read
-  mov ebx, [fileHandle] ;file_descriptor
-  mov ecx, fileBuffer
-  mov edx, 10
+  mov EAX, 3 ; sys_read
+  mov EBX, [fileHandle] ;file_descriptor
+  mov ECX, fileBuffer
+  mov EDX, 3 ;Antes era 10, está certo?
   int 80h
 
-  ;Quando chega no final do arquivo EAX é trocado por 0
-  cmp eax, 0
+  ;Quando chega no final do arquivo, o registrador EAX é trocado por 0
+  cmp EAX, 0
   je exit
 
+  ;Esse é o trecho que vai virar função
+
+  xor EAX, EAX
+  mov ECX, fileBuffer
+  add ECX, 2
+  mov AL, BYTE[ECX]
+  add EAX, 50
+
+  mov BYTE[ECX], AL
+
   ;ESCREVE O ARQUIVO
-  mov eax, 4 ; sys_write
-  mov ebx, [fileHandle2] ;1 -> escreve na tela ao invés do handler
-  mov ecx, fileBuffer
-  mov edx, 10
+  mov EAX, 4 ; sys_write
+  mov EBX, [fileHandle2] ;1 -> escreve na tela ao invés do handler
+  mov ECX, fileBuffer
+  mov EDX, 3 ;Antes era 10, está certo?
   int 80h
 
 ;push DWORD[fileBuffer]
@@ -74,10 +90,12 @@ loop:
 ;call printf
 ;add ESP, 3
 
+;A menos que o programa pule direto para o exit
+;Ele vai permanecer voltando ao loop onde lê do arquivo1
+;e passa pro arquivo2
 jmp loop
 
 ;encerra o programa
-
 exit:
   mov EAX, 1
   xor EBX, EBX
