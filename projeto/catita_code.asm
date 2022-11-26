@@ -9,6 +9,8 @@ section .data
   fileHandle dd 0
   fileHandle2 dd 0
 
+  cor_escolhida dd 0
+
 section .bss
   fileBufferHeader RESB 54
   fileBuffer RESB 3
@@ -73,6 +75,14 @@ loop:
   mov AL, BYTE[ECX]
   add EAX, 50
 
+  ;Se o valor for maior que 255 altera ele
+  cmp EAX, 255
+  jbe menor_que
+
+  ;Corrige as cores maiores que 255
+  mov EAX, 255
+
+  menor_que:
   mov BYTE[ECX], AL
 
   ;ESCREVE O ARQUIVO
