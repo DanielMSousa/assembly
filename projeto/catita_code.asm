@@ -3,9 +3,15 @@ extern scanf
 global main
 
 section .data
+  ;frase_num db ' %d ', 0
+  
+  ultimo_dado dd 1
+
   filename db 'catita.bmp', 0
   filename2 db 'catita2.bmp', 0
+  
   fileHandle dd 0
+  fileHandle2 dd 0
 
 section .bss
   fileBufferHeader RESB 54
@@ -18,7 +24,7 @@ main:
 global start
 _start:
 
-  ;ABRE O ARQUIVO catita1
+  ;ABRE O ARQUIVO catita
   mov eax, 5
   mov ebx, filename ; sys_open
   mov ecx, 0 ; read_only
@@ -28,28 +34,43 @@ _start:
   ;MOVE O PONTEIRO PARA O HANDLE
   mov [fileHandle], EAX
 
+  ;CRIA E ABRE catita2
+  mov eax, 8           ; sys_creat 
+  mov ebx, filename2 
+  mov ecx, 777 
+  int 80h 
+
+  mov [fileHandle2], EAX
+
+  ;ATÉ AQUI CRIOU UM ARQUIVO CATITA2 VAZIO
   ;jmp exit
 
   ;Lê o arquivo
   loop:
-  mov eax, 3 ; sys_read
-  mov ebx, [fileHandle] ;file_descriptor
-  mov ecx, fileBufferHeader
-  mov edx, 10
-  int 80h
+    mov eax, 3 ; sys_read
+    mov ebx, [fileHandle] ;file_descriptor
+    mov ecx, fileBuffer
+    mov edx, 10
+    int 80h
 
-  ;compara eax com 0, se for igual pula para o final
+    ;ESCREVE O ARQUIVO
+    mov eax, 4 ; sys_write
+    mov ebx, 1;[fileHandle2] ;1 -> escreve na tela ao invés do handler
+    mov ecx, fileBuffer
+    mov edx, 10
+    int 80h
+
+  ;Quando chega no final do arquivo EAX é trocado por 0
   cmp eax, 0
-  je exit
+  jne loop
   
-  ;ESCREVE O ARQUIVO
-  mov eax, 4 ; sys_write
-  mov ebx, 1;[fileHandle] -> escreve na tela ao invés do handler
-  mov ecx, fileBuffer
-  mov edx, 10
-  int 80h
-
-  jmp loop
+  ;push DWORD[fileBuffer]
+  ;push frase_num
+  
+  ;printaria o bagulho na tela...
+  ;push fileBuffer
+  ;call printf
+  ;add ESP, 3
 
   ;encerra o programa
   exit:
