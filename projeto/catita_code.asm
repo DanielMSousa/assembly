@@ -5,11 +5,11 @@ global main
 section .data
   filename db 'catita.bmp', 0
   filename2 db 'catita2.bmp', 0
+  cor_escolhida dd 0
+  valor dd 0
 
   fileHandle dd 0
   fileHandle2 dd 0
-
-  cor_escolhida dd 0
 
 section .bss
   fileBufferHeader RESB 54
@@ -21,6 +21,14 @@ main:
 
 global start
 _start:
+
+;Coloca a cor escolhida pelo usuário na variável
+;0 - azul, 1 - verde e 2 - vermelho (BGR)
+mov EAX, 0
+mov [cor_escolhida], EAX
+
+mov EAX, 255
+mov [valor], EAX
 
 ;ABRE O ARQUIVO catita
 mov EAX, 5
@@ -71,9 +79,9 @@ loop:
 
   xor EAX, EAX
   mov ECX, fileBuffer
-  add ECX, 2
+  add ECX, [cor_escolhida]
   mov AL, BYTE[ECX]
-  add EAX, 50
+  add EAX, [valor]
 
   ;Se o valor for maior que 255 altera ele
   cmp EAX, 255
