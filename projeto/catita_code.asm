@@ -6,6 +6,19 @@ extern scanf
 global main
 
 section .data
+  ;Frases de pergunta para o usuário
+  ask_inputname db 'Qual nome do arquivo de entrada? ',0H
+  ask_outputname db 'Qual nome do arquivo de saida?',0H
+  ask_color_channel db 'Qual canal de cores deseja alterar?',0AH,0H
+  color_option_1 db '0. Azul',0AH,0H
+  color_option_2 db '1. Verde',0AH,0H
+  color_option_3 db '2. Vermelho',0AH,0H
+  ask_color_intensity db 'Qual sera o valor adicionado a esse canal de cor?',0AH,0H
+
+  ;Formatos para receber os dados
+  formatinput: db "%d", 0
+  formatinputstring: dd "%s", 0
+
   filename db 'catita.bmp', 0
   filename2 db 'catita2.bmp', 0
   cor_escolhida dd 0
@@ -23,10 +36,6 @@ section .text
 funcao:
   push EBP
   mov EBP, ESP
-
-  ;EBP + 8 ; => pixel
-  ;EBP + 12; => cor
-  ;EBP + 16; => valor
 
   xor EAX, EAX ;Zera EAX
   mov ECX, [EBP+8] ;Aponta pro pixel
@@ -53,14 +62,60 @@ main:
 global start
 _start:
 
-;Coloca a cor escolhida pelo usuário na variável
-;0 - azul, 1 - verde e 2 - vermelho (BGR)
-mov EAX, 0
-mov [cor_escolhida], EAX
+;pergunta o nome do arquivo de entrada
+  push ask_inputname
+  call printf
+  add ESP, 4
 
-;Aumento
-mov EAX, 255
-mov [valor], EAX
+  ;recebe o nome do arquivo de entrada
+  push filename
+  push formatinputstring 
+  call scanf
+  add ESP, 8
+
+  ;pergunta o nome do arquivo de saída
+  push ask_outputname
+  call printf
+  add ESP, 4
+
+  ;recebe o nome do arquivo de saída
+  push filename2
+  push formatinputstring 
+  call scanf
+  add ESP, 8
+
+  ;pergunta o nome do canal de cor
+  push ask_color_channel
+  call printf
+  add ESP, 4
+
+  ;Motra as 3 opções pro usuário
+  push color_option_3
+  push color_option_2
+  push color_option_1
+  call printf
+  add ESP, 4
+  call printf
+  add ESP, 4
+  call printf
+  add ESP, 4
+
+  ;recebe a cor escolhida
+  push cor_escolhida
+  push formatinput 
+  call scanf
+  add ESP, 8
+
+  ;Pergunta ao usuário quanto será somado ao canal
+  push ask_color_intensity
+  call printf
+  add ESP, 4
+
+  ;Recebe o valor a ser somado ao canal
+  push valor
+  push formatinput 
+  call scanf
+  add ESP, 4
 
 ;ABRE O ARQUIVO catita
 mov EAX, 5
@@ -93,7 +148,6 @@ mov ECX, fileBufferHeader
 mov EDX, 54
 int 80h
 
-;jmp exit
 
 ;Lê o arquivo
 loop:
@@ -113,7 +167,7 @@ loop:
 
   call funcao
 
-  ADD esp, 12
+  add ESP, 12
 
   ;ESCREVE O ARQUIVO
   mov EAX, 4 ; sys_write
@@ -122,17 +176,6 @@ loop:
   mov EDX, 3 ;Antes era 10, está certo?
   int 80h
 
-;push DWORD[fileBuffer]
-;push frase_num
-
-;printaria o bagulho na tela...
-;push fileBuffer
-;call printf
-;add ESP, 3
-
-;A menos que o programa pule direto para o exit
-;Ele vai permanecer voltando ao loop onde lê do arquivo1
-;e passa pro arquivo2
 jmp loop
 
 ;encerra o programa
