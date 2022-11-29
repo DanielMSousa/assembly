@@ -1,3 +1,6 @@
+;Daniel Moreira de Sousa
+;20200016741
+
 extern printf
 extern scanf
 global main
@@ -17,6 +20,34 @@ section .bss
 
 section .text
 
+funcao:
+  push EBP
+  mov EBP, ESP
+
+  ;EBP + 8 ; => pixel
+  ;EBP + 12; => cor
+  ;EBP + 16; => valor
+
+  xor EAX, EAX ;Zera EAX
+  mov ECX, [EBP+8] ;Aponta pro pixel
+  add ECX, [EBP+12] ;move a cor escolhida para ECX
+  mov AL, BYTE[ECX] ;escolhe o byte atual, ou seja o byte 0, 1 ou 2 dependendo da cor escolhida
+  add EAX, [EBP+16] ;Soma o valor escolhido
+
+  ;Se o valor for maior que 255 altera ele
+  cmp EAX, 255
+  jbe menor_que
+
+  ;Corrige as cores maiores que 255
+  mov EAX, 255
+
+  menor_que:
+  mov BYTE[ECX], AL
+
+  mov esp, ebp
+  pop ebp
+  ret
+
 main:
 
 global start
@@ -27,6 +58,7 @@ _start:
 mov EAX, 0
 mov [cor_escolhida], EAX
 
+;Aumento
 mov EAX, 255
 mov [valor], EAX
 
@@ -49,17 +81,17 @@ int 80h
 mov [fileHandle2], EAX
 
 ;Lê o header e já escreve em catita2
-  mov EAX, 3 ; sys_read
-  mov EBX, [fileHandle] ;file_descriptor
-  mov ECX, fileBufferHeader
-  mov EDX, 54
-  int 80h
+mov EAX, 3 ; sys_read
+mov EBX, [fileHandle] ;file_descriptor
+mov ECX, fileBufferHeader
+mov EDX, 54
+int 80h
 
-  mov EAX, 4 ; sys_write
-  mov EBX, [fileHandle2] ;1 -> escreve na tela ao invés do handler
-  mov ECX, fileBufferHeader
-  mov EDX, 54
-  int 80h
+mov EAX, 4 ; sys_write
+mov EBX, [fileHandle2] ;1 -> escreve na tela ao invés do handler
+mov ECX, fileBufferHeader
+mov EDX, 54
+int 80h
 
 ;jmp exit
 
@@ -75,23 +107,13 @@ loop:
   cmp EAX, 0
   je exit
 
-  ;Esse é o trecho que vai virar função
+  push DWORD[valor]
+  push DWORD[cor_escolhida]
+  push fileBuffer
 
-  xor EAX, EAX
-  mov ECX, fileBuffer
-  add ECX, [cor_escolhida]
-  mov AL, BYTE[ECX]
-  add EAX, [valor]
+  call funcao
 
-  ;Se o valor for maior que 255 altera ele
-  cmp EAX, 255
-  jbe menor_que
-
-  ;Corrige as cores maiores que 255
-  mov EAX, 255
-
-  menor_que:
-  mov BYTE[ECX], AL
+  ADD esp, 12
 
   ;ESCREVE O ARQUIVO
   mov EAX, 4 ; sys_write
